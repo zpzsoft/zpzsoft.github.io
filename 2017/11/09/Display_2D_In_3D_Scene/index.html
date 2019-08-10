@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+<meta name="theme-color" content="#f8f5ec">
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="3D场景中2D人物剪裁"><meta name="keywords" content="3D裁剪, One Man With Dream"><link rel="alternate" href="/default" title="One Man With Dream"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0">
+<link rel="canonical" href="http://arenas0.com/2017/11/09/Display_2D_In_3D_Scene/">
+
+<link rel="stylesheet" type="text/css" href="/lib/nprogress/nprogress.min.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0">
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":"","fancybox":"","pjax":true,"latex":false};
+</script>
+
+    <title>3D场景中2D人物剪裁 - One Man With Dream</title>
+  </head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">One Man With Dream</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/about">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">3D场景中2D人物剪裁
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2017-11-09
+        </span><span class="post-category">
+            <a href="/categories/3D编程/">3D编程</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-content"><p>最近新做一个模拟沙盒类的游戏, 大致想实现的需求如下：</p>
+<ul>
+<li>场景和场景内的物件使用3D表现更多的场景细节</li>
+<li>人物使用2D骨骼动画来兼容更多同屏</li>
+<li>游戏视角类斜45°</li>
+</ul>
+<p>显然类似的需求在手机游戏上还没有特别爆款的项目， 但是也是有接近的，比较火的游戏有Don’t Starve（饥荒），看起来效果也还是不错的</p>
+<p><img src="/2017/11/09/Display_2D_In_3D_Scene/1510048237569.png" alt="Alt text"></p>
+<p>再往更远点的时间算, 其实类似的做法从Doom时代开始就已经被广泛使用过, 类似 Diablo 2, 仙境传说等都用过, 国内游戏也有&lt;苍茫之境&gt;,<br>这样的做法一个极大的优势就是能把更多的资源用于展示更多的同屏人物数量上, 看看下图密集恐惧症, 有木有点o(∩_∩)o</p>
+<p><img src="/2017/11/09/Display_2D_In_3D_Scene/1510048792256.png" alt="Alt text"></p>
+<a id="more"></a>
+<p>那回归正题, 既然这种3 + 2的方式还是有先例的, 只是根据游戏的类型不同而做不同的选择。那我们就得研究下Unity下具体怎么实现！<br>要把这个问题讲清楚， 我们得先从3D投影方式来开始：<br>简单来说， 为了将三维世界中的物体最终投影到二维屏幕上，一般使用投影（Projection）来实现。有两种投影方式：</p>
+<ul>
+<li>透视投影（perspective projection）</li>
+<li>平行投影（parallel projection）</li>
+</ul>
+<p><img src="/2017/11/09/Display_2D_In_3D_Scene/1510053314356.png" alt="Alt text"></p>
+<p>其中透视投影一般用于3D游戏中， 而平行投影则应用于2D游戏中较多。其中Unity中默认的唯二的摄像机投影方式一个是透视投影， 另一个则是正交投影（Orthographic）（这是平行投影方式中最常用的一种）。其他例如大名鼎鼎的Clash Of Clan就是使用的平行投影中的另一种：等轴测投影（isometric projection）。这里不是我们今天的重点，就不展开说。<br>根据我们的需求来分析， 一般可能有如下几种方式来实现如上需求（欢迎补充）：<br><strong>1. 场景和物件走透视投影， 确保建筑的近大远小且更有层次感；人物使用平行投影， 绘制优先级在场景之上</strong><br>这种方式最明显的问题就是只能应用于简单的场合， 对于一些复杂有众多层叠的3D场景， 人物得和场景中物件有穿透。<br><strong>2.  使用透视头投影， 2D人物sprite保持一直垂直</strong><br>这种做法初看貌似可以， 实则也有不小的问题。因为摄像机采用的透视效果， 所以对于摄像机远处的人物会看起来很奇怪。</p>
+<p><img src="/2017/11/09/Display_2D_In_3D_Scene/1510055918522.png" alt="Alt text"></p>
+<p>如上图, 1号人物垂直于地面正面迎着摄像机(非垂直摄像机)， 看起来效果尚可。 其实和正常的对象比已经有压扁的现象， 但对应的2， 3， 4号人物就已经有比较严重的扭曲和变形现象。如果使用这种方式我们需要对每个角色根据摄像机的位置计算角度来实时进行矫正 ！ 听起来工作量真的不少，有点扯。不过真的有人这么做过！ 大名鼎鼎的《Diablo 2》中有一个经典的设置， 就是可以设置游戏的投影方式：<br>![Alt text](./d2_perspmode 1.gif)<br>简单看， 我们好像没看到很明显的差别， 仔细看游戏中的人物和建筑的错落感， 你一定会感觉很震惊 ！暴雪的程序员GG在一个完全2D游戏中实现了透视投影</p>
+<p><img src="/2017/11/09/Display_2D_In_3D_Scene/1510056587761.png" alt="Alt text"></p>
+<p>听起来貌似有可行性， 但是实现难度未知！OK让我们继续看看有没有更轻松的实现方式~<br><strong>3.  使用透视投影， 2D人物sprite垂直摄像机</strong></p>
+<p><img src="/2017/11/09/Display_2D_In_3D_Scene/1510057107667.png" alt="Alt text"></p>
+<p>效果上基本达到预期， 但是为了垂直摄像机人物基本需要垂直摄像机。这样的做法也有一个严重的问题：2d人物和场景在一定摄像机视角下必然会和3D物体出现穿插现象 ！</p>
+<p><img src="/2017/11/09/Display_2D_In_3D_Scene/1510057366639.png" alt="Alt text"></p>
+<p>翻开和我们需求实现最接近的仙境传说和苍茫之境， 仔细对比和推敲之后发现一个规律： 2D人物sprite一定是垂直摄像机 ，并且可以和3D场景进行穿插交互！尤其是在MOD模式下看的仙境传说效果更明显，稍微评估了下之后方法1第一个排除掉， 然后方法2个人感觉实现难度偏大 ！那先从第三个方法入手， 着手解决2D sprite和3D object的穿插问题。<br>这里我们要解决两个问题1， 2D和3D的碰撞问题；2， 2D和3D的穿插问题。<br>首先所有的对象都摆放在3D场景中， 所以第一直观应该是采用3D碰撞就能达到要求。就算是倾斜的2D人物， 也应该会挂对应的胶囊体来表示他的体积和碰撞， 只是Capsule Collider的大小不用考虑完全包裹住倾斜的2D Sprite。 那我们接下来只需要解决视角上的欺骗问题，也就是让玩家从摄像机视角下看到不会有偏差就可以。那这个其实也好解决, 只需要我们把2D人物的Sprite的depth层级稍微拉近摄像机, 抵消掉倾斜部分就可以, 这个我们可以在shader层面解决。 看下Offset的实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Cull Off</span><br><span class="line">ZWrite Off</span><br><span class="line">Offset 0, -5000 //主要看这行 !</span><br><span class="line">Blend One OneMinusSrcAlpha</span><br><span class="line">Lighting Off</span><br></pre></td></tr></table></figure>
+
+<p>这里我们根据我们游戏中固定斜视摄像机的视角, 使用Offset, 就能初步达到欺骗眼睛的效果 !<br>这里简单介绍下这个参数的原理,先看下官方的Manual说明:</p>
+<blockquote>
+<p><strong>Offset Factor, Units</strong><br>Allows you specify a depth offset with two parameters. factor and units. Factor scales the maximum Z slope, with respect to X or Y of the polygon, and units scale the minimum resolvable depth buffer value. This allows you to force one polygon to be drawn on top of another although they are actually in the same position. For example Offset 0, -1 pulls the polygon closer to the camera ignoring the polygon’s slope, whereas Offset -1, -1 will pull the polygon even closer when looking at a grazing angle.</p>
+</blockquote>
+<p>大致的意思是Offset可以修改矩形最后的Z深度值, 以达到矫正的目的。那这里提到深度值让我们联想到了OpenGL中著名的*<em>深度冲突</em>（Z-fighting）*， 解决办法就是给物体一个偏移值。这里涉及到稍微有点复杂的计算公式, </p>
+<blockquote>
+<p>offset = factor * Δz + r *units<br>看这这个公式是不是有点蒙， 没关系我们再看看glPolygonOffset 是怎么定义的：<br>When GL_POLYGON_OFFSET is enabled, each fragment’s depth value will be offset after it is interpolated from the depth values of the appropriate vertices. The value of the offset is factor * Δz + r *units, where Δz is a measurement of the change in depth relative to the screen area of the polygon, and r is the smallest value that is guaranteed to produce a resolvable offset for a given implementation. The offset is added before the depth test is performed and before the value is written into the depth buffer</p>
+</blockquote>
+<p>其中Δz是在光删化过程中多边行的深度斜率值, 越是与近裁剪面（near clipping plan）平行，就越接近0; r是窗口坐标系的深度值中可分辨的差异的最小值, 一般是由实现OpenGL的平台指定的一个常量值。<br>显然针对我们的需求来说， 如果2D角色是垂直摄像机， 那我们应该尽量尝试去调试units参数。</p>
+<p><img src="/2017/11/09/Display_2D_In_3D_Scene/57138ee6-b46f-4580-ae30-dcc7b39c0bf9.gif" alt="Alt text"></p>
+<p>到这里总算稍微的解释清楚了一点点, 怎么样是不是有那么一点点的不简单! 当然如果想实现类似RO一样全视角自由旋转, 我们还需要更多的兼容实现。后续有时间我们再详细分析~</p>
+
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/3D裁剪/">3D裁剪</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2018/01/30/Unity_Shadow_1/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Unity下阴影的实现--模仿<模拟城市>全局阴影</模拟城市></span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2017/11/07/first-blood/">
+        <span class="next-text nav-default">First Blood !</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zpzsoft@email.com" class="iconfont icon-email" title="email"></a>
+        <a href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2019<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Arenas Zheng</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/pjax/jquery.pjax.min.js"></script>
+  <script type="text/javascript" src="/lib/nprogress/nprogress.min.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.11.0"></script>
+</body>
+</html>

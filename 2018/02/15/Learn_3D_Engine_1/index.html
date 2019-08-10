@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+<meta name="theme-color" content="#f8f5ec">
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="一步一步学3D引擎 -- (1) 软件光栅化渲染器"><meta name="keywords" content="渲染, 引擎, One Man With Dream"><link rel="alternate" href="/default" title="One Man With Dream"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0">
+<link rel="canonical" href="http://arenas0.com/2018/02/15/Learn_3D_Engine_1/">
+
+<link rel="stylesheet" type="text/css" href="/lib/nprogress/nprogress.min.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0">
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":"","fancybox":"","pjax":true,"latex":false};
+</script>
+
+    <title>一步一步学3D引擎 -- (1) 软件光栅化渲染器 - One Man With Dream</title>
+  </head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">One Man With Dream</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/about">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">一步一步学3D引擎 -- (1) 软件光栅化渲染器
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2018-02-15
+        </span><span class="post-category">
+            <a href="/categories/3D编程/">3D编程</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-content"><h3 id="开篇"><a href="#开篇" class="headerlink" title="开篇"></a><strong>开篇</strong></h3><p>笔者作为一个从13年才开始进入游戏行业的从业者，游戏职业生涯基本都是跟着手游项目的来积累技术，经历过Cocos2d-x到Unity， 现在面临这Unreal的选择。相信有不少朋友也会有和我类似的成长轨迹，加上一直在中小公司工作更多面临的是无尽的版本开发以及问题解决，很少有专门的时间停下来去了解引擎背后的很多原理。所以希望从这个系列开始把自己平时学习的知识完整串联记录起来, 尽量形成一个完整的知识体系，也希望能对其他有类似迷惑的人有帮助。</p>
+<h3 id="申明和必要性"><a href="#申明和必要性" class="headerlink" title="申明和必要性"></a><strong>申明和必要性</strong></h3><p>由于完整的3D游戏引擎是一个非常庞大的工程, 涉及的模块及工具链也非常复杂。靠本人微薄的技术积累很难讲清讲全，只能尽量把学习过的模块尽量讲清楚。后续系列基本会基于C++、Win32、OpenGL等方向进行代码实现。<br>        可能会有人会质疑是否有必要去学习一些偏封装底层的东西，这个就见仁见智了。就像你会开车但是不一定要求你必须懂修车， 但是你懂修车遇到路上抛锚是不是可以快点定位， 小毛小病也可以自己解决掉。游戏客户端开发大体分工也分GamePlay和Engine 两个方向， 是不同的方向没有优劣， 任何一个方向做精一样会取得不错的成就。</p>
+<h3 id="渲染管线流程"><a href="#渲染管线流程" class="headerlink" title="渲染管线流程"></a><strong>渲染管线流程</strong></h3><p><img src="/2018/02/15/Learn_3D_Engine_1/1523362925023.png" alt="Alt text"></p>
+<table>
+<thead>
+<tr>
+<th>流程</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Vertex Data</td>
+<td>这一步主要是准备好顶点数据, 这一步就是OpenGL中的VAO VBO的初始化工作。</td>
+</tr>
+<tr>
+<td>Primitive Porcessing</td>
+<td>顶点数据根据图元类型进行预处理, 例如到底 GL_LINES,  GL_LINE_STRIP,  GL_TRIANGLES, GL_TRIANGLE_STRIP,  GL_TRIANGLE_FAN.</td>
+</tr>
+<tr>
+<td>Vertex Shader</td>
+<td>顶点着色器执行每个顶点的处理, 根据接收的顶点数据信息进行一些转换, 例如MVP坐标系的转换。</td>
+</tr>
+<tr>
+<td>Tessellation</td>
+<td>曲面细分, 是一个可选项。将多边形顶点细分成更多细小的碎片,提高逼真度。一般和Displacement Mapping配合使用, 详见<a href="http://www.nvidia.cn/object/tessellation_cn.html" target="_blank" rel="noopener">这里</a></td>
+</tr>
+<tr>
+<td>Geometry Shader</td>
+<td>OpenGL 3.0引入的新着色器, 主要用于将Vertex Shader输入的可调整的图元进行加工生成更多形状的顶点.</td>
+</tr>
+<tr>
+<td>Primitive Assembly</td>
+<td>图元装配主要用于讲上述输入的顶点组装成点、直线， 三角形的过程.</td>
+</tr>
+<tr>
+<td>Rasterization</td>
+<td>就是将上个步骤中的图元分解成片段的的过程(像素的前身)</td>
+</tr>
+<tr>
+<td>Fragment Shader</td>
+<td>片段着色器是可编程阶段, 用于改变即将生成的像素的颜色和深度信息.</td>
+</tr>
+<tr>
+<td>Pre-FrameBuffer</td>
+<td>这一步主要进行一些像素处理, 包括裁剪, 模版测试, 深度测试等, 经过一系列操作最终输出到屏幕上.</td>
+</tr>
+</tbody></table>
+<h3 id="3D渲染流程"><a href="#3D渲染流程" class="headerlink" title="3D渲染流程"></a><strong>3D渲染流程</strong></h3><p>上述渲染管线包含了大致渲染的完整流程, 涉及的技术点很多。千万不要慌，先做个大致的了解做大心中有数。 下面我们开始来做减法，<br>上述流程我们先做个最简抽象， 基本的流程应该是：顶点数据-&gt;经过一系列转换-&gt;显示到屏幕上。当然不可能这么简单， 我们稍微加点难度<br><img src="/2018/02/15/Learn_3D_Engine_1/1523362945662.jpeg" alt="Alt text"></p>
+<p>顶点数据-&gt;世界坐标系-&gt;观察坐标系-&gt;裁剪坐标系-&gt;规范化坐标系-&gt;屏幕坐标系。<br>有这几个流程我们基本能简单在屏幕上显示最基本的3D单元拉， 流程大致是这样，这个流程我们一般称之为软件光栅化过程， 那我们开始编码准备：<br>要实现一个3D软件光栅化的大致技术点分解如下:<br>    1. 单点像素的绘制<br>    2. 矩阵及基本运算的支持<br>    3. 透视摄像机的实现<br>    4. 绘制直线和三角形<br>    5. FrameBuffer和Zbuffer的实现<br>    6. 屏幕坐标系<br>    7. 纹理UV映射</p>
+<h3 id="1-单点像素的绘制"><a href="#1-单点像素的绘制" class="headerlink" title="1. 单点像素的绘制"></a>1. 单点像素的绘制</h3><p>选择的是稍微熟悉的win32的平台, 我们第一个会想到SetPixel, DrawLine之类的函数, 这是win32下GUI中常用的一些函数, 测试下来直接使用SetPixel速度太慢, 而且考虑到我们要比较自由的做屏幕内存的刷新,可能得用其他方式。最好的方式是我们自己申请一块内存的buffer按照我们的规则绘制之后一次性再往屏幕上刷新。 内存设备接口CreateCompatibleDC便成了我们很好的选择, 详细可以参考<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/dd183402(v=vs.85).aspx" target="_blank" rel="noopener">这里</a>的介绍.</p>
+<h3 id="2-矩阵及基本运算"><a href="#2-矩阵及基本运算" class="headerlink" title="2. 矩阵及基本运算"></a>2. 矩阵及基本运算</h3><p>用c++去实现基本的矩阵, 这块主要是旋转的几个公式需要注意差别, 最好尝试在纸上推倒下. MSDN官方链接看<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb206269(v=vs.85).aspx" target="_blank" rel="noopener">https://msdn.microsoft.com/en-us/library/windows/desktop/bb206269(v=vs.85).aspx</a></p>
+<h3 id="3-透视摄像机的实现"><a href="#3-透视摄像机的实现" class="headerlink" title="3. 透视摄像机的实现"></a>3. 透视摄像机的实现</h3><p>如果有了物体那自然少不了观察者, 这里我们需要实现一个摄像机。正交摄像机相对比较简单，我们这里实现一个透视摄像机。<br>这里要注意, OpenGL是右手坐标系, DirectX是左手坐标系, 对这里计算公式也会有影响, 这里有详细的推导过程, 大家可以尝试跟着看一遍。当然最后的结果就是摄像机这里我们要生成两个矩阵, ViewMatrix和ProjectionMatrix。<br>Q: 为什么需要ViewMatrix ?<br>A: 在世界坐标系中, 摄像机不一定就位于世界坐标系的原点, 而且摄像机的观察方向也不一定是正视Z的正方向。这个ViewMatrix是旋转摄像机还是旋转其他物体相对摄像机的位置 ?</p>
+<p>Q: 如何实现ViewMatrix ?<br>A: 参考<a href="https://www.cnblogs.com/graphics/archive/2012/07/12/2476413.html" target="_blank" rel="noopener">这里</a>, OpenGL和DirectX的ViewMatrix公式不一样.</p>
+<p>Q: 为什么需要ProjectionMatrix ?<br>A: 透视摄像机是一套既有的规则的存在, 也就是我们平常经常说的近大远小。这是一个视椎体，我们需要讲所有物体换算到他的范围内去。<br><img src="/2018/02/15/Learn_3D_Engine_1/1523362967782.png" alt="Alt text"></p>
+<p>Q:如何实现ProjectionMatrix ?<br>A: 参考<a href="http://www.songho.ca/opengl/gl_transform.html" target="_blank" rel="noopener">这里</a>, 记住OpenGL和DirectX的PorjectionMatrix公式也不一样.</p>
+<h3 id="4-绘制直线和三角形"><a href="#4-绘制直线和三角形" class="headerlink" title="4. 绘制直线和三角形"></a>4. 绘制直线和三角形</h3><p>这里主要技术点在于直线绘制的算法以及三角形填充的算法, 常用的支线绘制算法有<a href="http://www.cnblogs.com/gamesky/archive/2012/08/21/2648623.html" target="_blank" rel="noopener">Bresenham快速直线算法</a>, 以及<a href="http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html" target="_blank" rel="noopener">三角形填充算法</a>当然你也可以自己尝试去按照自己的想法去写写看， 然后再考虑效率问题。<br><img src="/2018/02/15/Learn_3D_Engine_1/1523362982677.png" alt="Alt text"></p>
+<h3 id="5-FrameBuffer和Zbuffer的实现"><a href="#5-FrameBuffer和Zbuffer的实现" class="headerlink" title="5. FrameBuffer和Zbuffer的实现"></a>5. FrameBuffer和Zbuffer的实现</h3><p>这里的实现相对简单点, FrameBuffer就是我们开始的时候需要Malloc的一块内存区域, 绘制好之后动态刷新到屏幕上去. Zbuffer相对简单点, 只要有一个和屏幕大小一样的buffer, 来记录下当前的每个像素的深度值, 按照z的大小来决定是否写入FrameBuffer.</p>
+<h3 id="6-屏幕坐标系"><a href="#6-屏幕坐标系" class="headerlink" title="6. 屏幕坐标系"></a>6. 屏幕坐标系</h3><p>我们绘制的物体由局部坐标下-&gt;世界坐标系-&gt;视口坐标系-&gt;投影坐标系转换之后, 需要往屏幕坐标系上转换, 毕竟3D空间上的世界再精彩, 我们最后绘制像素在一个2D屏幕上绘制的, 这里就涉及3D往2D的转换.<br>Vector worldPos;<br>Vector screenPos;<br>screenPos.x = (worldPos.x/worldPos.w + 1)<em>SCREEN_WIDTH/2;<br>screenPos.x = (1 - worldPos.y/worldPos.w)</em>SCREEN_HEIGHT/2;<br>screenPos.z = screenPos.z / screenPos.w;</p>
+<p>到这一步我们已经能看到在屏幕上绘制的立方体了, 当然可能是纯色的. 或者每个面只是一个单色的, 下面就要去给每个面蒙一块画布~</p>
+<h3 id="7-纹理UV映射"><a href="#7-纹理UV映射" class="headerlink" title="7. 纹理UV映射"></a>7. 纹理UV映射</h3><p><img src="/2018/02/15/Learn_3D_Engine_1/1523363012951.png" alt="Alt text"></p>
+<p>这一步开始的时候我没意识到, 发现完全不是我想象的近大远小的样子嘛 ! 比如是这样的:<br><img src="/2018/02/15/Learn_3D_Engine_1/1523363018614.png" alt="Alt text"></p>
+<p>其实这是一个典型的案例, 详细看<a href="https://en.wikipedia.org/wiki/Texture_mapping#Perspective_correctness" target="_blank" rel="noopener">这里</a>wiki介绍:</p>
+<p><img src="/2018/02/15/Learn_3D_Engine_1/1523363024678.png" alt="Alt text"></p>
+<p>简单的说就是这里的技术点叫Perspective correctness. 我们mesh上的UV分步的时候时候不能简单的来做线性的变化, 而应该考虑每个像素的Z来做采样, 最后的结果当时最后一个图是正解.</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>最后终于到展示最后成果的时候了, 真是:红军不怕远征难, 最后结果看丑男~ 还不是很完美, 也还有很多技术点没讲解清楚, 不过还是很开心能完整把流程做完😄</p>
+<p><img src="/2018/02/15/Learn_3D_Engine_1/1523363064619.gif" alt="Alt text"></p>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a><strong>代码实现</strong></h3><p><a href="https://github.com/zpzsoft/SoftRaster" target="_blank" rel="noopener">https://github.com/zpzsoft/SoftRaster</a></p>
+<h3 id="主要参考链接"><a href="#主要参考链接" class="headerlink" title="主要参考链接"></a><strong>主要参考链接</strong></h3><p><a href="http://www.songho.ca/opengl/index.html" target="_blank" rel="noopener">http://www.songho.ca/opengl/index.html</a><br><a href="https://github.com/skywind3000/mini3d" target="_blank" rel="noopener">https://github.com/skywind3000/mini3d</a></p>
+
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/渲染-引擎/">渲染, 引擎</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2018/12/03/UE4_Learn_Build_Binary/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">UE4 学习笔记 (一) 引擎源码编译及Binary文件导出</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2018/01/30/Unity_Shadow_1/">
+        <span class="next-text nav-default">Unity下阴影的实现--模仿<模拟城市>全局阴影</模拟城市></span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zpzsoft@email.com" class="iconfont icon-email" title="email"></a>
+        <a href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2019<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Arenas Zheng</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/pjax/jquery.pjax.min.js"></script>
+  <script type="text/javascript" src="/lib/nprogress/nprogress.min.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.11.0"></script>
+</body>
+</html>

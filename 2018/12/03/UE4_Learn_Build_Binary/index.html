@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+<meta name="theme-color" content="#f8f5ec">
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="UE4 学习笔记 (一) 引擎源码编译及Binary文件导出"><meta name="keywords" content="UE4, Binary, One Man With Dream"><link rel="alternate" href="/default" title="One Man With Dream"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0">
+<link rel="canonical" href="http://arenas0.com/2018/12/03/UE4_Learn_Build_Binary/">
+
+<link rel="stylesheet" type="text/css" href="/lib/nprogress/nprogress.min.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0">
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":"","fancybox":"","pjax":true,"latex":false};
+</script>
+
+    <title>UE4 学习笔记 (一) 引擎源码编译及Binary文件导出 - One Man With Dream</title>
+  </head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">One Man With Dream</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/about">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">UE4 学习笔记 (一) 引擎源码编译及Binary文件导出
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2018-12-03
+        </span><span class="post-category">
+            <a href="/categories/UE4/">UE4</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-content"><h4 id="1-背景介绍"><a href="#1-背景介绍" class="headerlink" title="1. 背景介绍"></a>1. 背景介绍</h4><p>使用Unreal4引擎做项目, 一定少不了要和源码打交道。对于一个之前一直用Unity做3D项目的程序猿来说，能接触这重高级引擎的全部源码，还是有点小鸡动的~</p>
+<p>项目组正式切换到UE引擎之后， 首先是大家一顿骚操作：把各种UE的官方Demo和Manul文档撸一遍，然后正式开始架构属于自己的项目的架构和收集组件。对我们项目来说因为有其他部门的支持，所以不是从0开始的，这个还算是有点欣慰。我接到的任务是对引擎的源码进行整理和编译，并上传到代码服务器上去。关于代码服务器的选择这里强烈推荐大家使用Perforce这个收费软件，细节下面详细讲。。。</p>
+<p>今天我们的重点是聊聊源码编译的事情这里把我编译过程中遇到的坑备忘下，希望对大家有帮助！</p>
+<h4 id="2-版本管理工具的选择"><a href="#2-版本管理工具的选择" class="headerlink" title="2. 版本管理工具的选择"></a>2. 版本管理工具的选择</h4><p><img src="/2018/12/03/UE4_Learn_Build_Binary/67ADD980-5702-4F24-B5B5-BAF4FCAC7ACA.png" alt="Alt text"></p>
+<p>目前游戏项目中常用的版本管理工具有大概如上几种，这里盗一张不知出处的图（侵删）,大家可以对这几款工具的对比有个直观的对比。 我总结几句我们花了一个星期的时间的血泪史：</p>
+<p><strong>1. 同等情况下，git上传和下载大工程速度更快更稳定。</strong> svn失败之后要所有重头再来，git至少add和commit的已经做完了。</p>
+<p><strong>2. 亲测超过500M的文件svn单个传无压力，git要走lfs（默认100M以内可以不用走）。</strong></p>
+<p><strong>3. 如果选择git作为版本管理工具，建议自己魔改一套更简洁的图形化工具(例如TortoiseGit)。</strong> 毕竟不是所有的美术策划都能接受：fetch/pull rebase stash/merge commit push的操作， 而且这还不过Stash Push和Stash Pop的操作。别和我说用命令行, 会被美术打死的(┬＿┬)</p>
+<p><strong>4. Perforce更适合游戏项目做版本管理工具。</strong> Unreal的工程随便都是30G以上，用svn的话试过上传一天一夜， 最后上传失败的（o(≧口≦)o崩溃）。 用p4就稍微友好多了，一个多小时妥妥上传掉。。。</p>
+<p><strong>SO !</strong> 选择啥工具看各位自己的选择了，个人强烈推荐有条件的团队直接上perforce。这里提醒一点：Unreal4.20的引擎源码10个G， 完整vs编译完成之后80G左右，引擎编译的Binary文件22G。。。</p>
+<h4 id="3-引擎编译及二进制文件导出"><a href="#3-引擎编译及二进制文件导出" class="headerlink" title="3. 引擎编译及二进制文件导出"></a>3. 引擎编译及二进制文件导出</h4><p>每个UE4项目都会有负责引擎修改的同学，如果一旦对引擎进行了修改那意味着对它进行了定制化开发，那么相同项目组中其他使用引擎的同学（例如：3D美术、策划、客户端程序员等）都得统一使用一样的引擎版本，以保持版本的一致性。那这里很重要的一步，就是如何进行引擎编译并对提取引擎的exe文件。</p>
+<p>第一次接触UE的时候我有点懵，反正时间紧任务重（国内游戏团队貌似都这个节奏！）， 那就用最土最笨的方法吧， 对编译之后的引擎做提取，删除最大以及windows不使用的so、a库文件。貌似也还成，提取之后大概28G大小和官方的Install之后的大小对比20G， 甚是满意😊</p>
+<p>辣么问题来了，以后每次有修改如果进行引擎的更新和提取呢？谁说过来着 : </p>
+<blockquote>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<strong><em>基本我们现在遇到的问题都是别人遇到过的，如果没有那肯定是你还没搜到！</em></strong></p>
+</blockquote>
+<p>果然已经有歪果仁小哥哥做过了 ! 看这个流程<a href="https://github.com/ryanjon2040/UE4-Binary-Builder" target="_blank" rel="noopener">Github地址</a>， 这个歪果仁小哥哥自己对UE的BuildGraph进行封装，还写了一个图形化工具。Very Nice！这才是有意义的工具~</p>
+<p>按照流程去做如果遇到问题，可以看下这里：</p>
+<blockquote>
+<ul>
+<li><strong>Q : <em>Unable to find installation of PDBCOPY.EXE</em></strong></li>
+<li><em>A : 如果遇到这个错误， 那你有可能和我一样本地安装的vs版本是2017而非2015。不要慌，这不是我们的过，先看看怎么解决（英语好的可以直接读<a href="https://forums.unrealengine.com/development-discussion/engine-source-github/113790-installed-build-fails-trying-to-run-pdbcopy-exe" target="_blank" rel="noopener">这一篇</a>）：<br>1， 首先下载<a href="https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk" target="_blank" rel="noopener">WIndows 10 SDK</a>， 确保其中的Debugging Tools选项是勾选的（默认勾选， 如果嫌大可以把下面几个不要勾选但是这个选项一定要留）。嫌麻烦的可以直接到<a href="https://pan.baidu.com/s/1Y0PQeHCMQh7Ln12d_p_Rzw" target="_blank" rel="noopener">百度网盘</a>下载。安装下载包Windows Kits\10\WindowsSDK\Installers路径下的X64 Debuggers And Tools-x64_en-us.msi<br>X86、 Debuggers And Tools-x86_en-us.msi两个文件。<br>2，如上一步操作成功之后进入：C:\Program Files (x86)\Windows Kits\10\Debuggers\x64拷贝pdbcopy.exe到如下两个路径<br>C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v12.0\AppxPackage<br>C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v14.0\AppxPackage<br>没有的路径和文件夹新建好即可。*</em></li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Q : <em>unreal No BuildPlatform found for Lumin</em></strong></li>
+<li><em>A : 遇到这个问题也许你可以检查下步骤1中外国小哥的工具，设置这里：<br><img src="/2018/12/03/UE4_Learn_Build_Binary/FEEF1FE6-F594-401D-8185-15785EEE501B.png" alt="Alt text"><br>开始我是手动选择Win64、Win32，但是结果发现遇到这个问题。搜下发现<br>   You can do this by either using the HostPlatformOnly flag or with WithLumin = “false”<br>原来这里得手动选择Host Platform Only选项， 或者手动修改工具里的命令加上WithLumin = “false”的选项。*</em></li>
+</ul>
+</blockquote>
+<h4 id="引用："><a href="#引用：" class="headerlink" title="引用："></a>引用：</h4><p><strong>1， <em><a href="https://github.com/ryanjon2040/UE4-Binary-Builder" target="_blank" rel="noopener">https://github.com/ryanjon2040/UE4-Binary-Builder</a></em></strong><br><strong>2， <em><a href="https://forums.unrealengine.com/development-discussion/engine-source-github/113790-installed-build-fails-trying-to-run-pdbcopy-exe" target="_blank" rel="noopener">https://forums.unrealengine.com/development-discussion/engine-source-github/113790-installed-build-fails-trying-to-run-pdbcopy-exe</a></em></strong></p>
+
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/UE4/">UE4</a>
+            <a href="/tags/Binary/">Binary</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2018/12/04/UE_Learn_PhysicCollider/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">UE4 学习笔记 (二) 记一次物理碰撞无法生效的解决</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2018/02/15/Learn_3D_Engine_1/">
+        <span class="next-text nav-default">一步一步学3D引擎 -- (1) 软件光栅化渲染器</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zpzsoft@email.com" class="iconfont icon-email" title="email"></a>
+        <a href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2019<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Arenas Zheng</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/pjax/jquery.pjax.min.js"></script>
+  <script type="text/javascript" src="/lib/nprogress/nprogress.min.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.11.0"></script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+<meta name="theme-color" content="#f8f5ec">
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="UE4下编辑器扩展-- (1) Plugin开发概要"><meta name="keywords" content="UE4, Plugin, One Man With Dream"><link rel="alternate" href="/default" title="One Man With Dream"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0">
+<link rel="canonical" href="http://arenas0.com/2019/02/14/Extending_the_UE4_Editor_1/">
+
+<link rel="stylesheet" type="text/css" href="/lib/nprogress/nprogress.min.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0">
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":"","fancybox":"","pjax":true,"latex":false};
+</script>
+
+    <title>UE4下编辑器扩展-- (1) Plugin开发概要 - One Man With Dream</title>
+  </head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">One Man With Dream</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/about">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">UE4下编辑器扩展-- (1) Plugin开发概要
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2019-02-14
+        </span><span class="post-category">
+            <a href="/categories/UE4/">UE4</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-content"><h2 id="扩展介绍"><a href="#扩展介绍" class="headerlink" title="扩展介绍 "></a><font color="#0000FF">扩展介绍 </font></h2><p>在游戏开发过程中, 一般我们都会对引擎做各种工具上的扩展, 来满足高效、快速的开发需要。常做的扩展一般有如下一些方面:</p>
+<p><img src="/2019/02/14/Extending_the_UE4_Editor_1/Extending_the_UE4_Editor_1-fb8e2719.png" alt><br><br></p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Developer Tools</td>
+<td align="center">常用的开发工具,包括蓝图调试器、碰撞分析器、调试器等辅助开发工具</td>
+</tr>
+<tr>
+<td>TooBar/Menu Extensions</td>
+<td align="center">主编辑器窗口或者单个Asset的编辑窗口的工具栏和菜单栏的扩展</td>
+</tr>
+<tr>
+<td>Detail Customization</td>
+<td align="center">细节面板的扩展</td>
+</tr>
+<tr>
+<td>Graph Nodes and Pins</td>
+<td align="center">蓝图节点和针脚的扩展</td>
+</tr>
+<tr>
+<td>Custom Asset And Editor</td>
+<td align="center">自定义Asset类型和编辑窗口</td>
+</tr>
+<tr>
+<td>Custom Edit Mode</td>
+<td align="center">自定义组件在编辑器窗口中的输入行为和可视化</td>
+</tr>
+</tbody></table>
+<p>UE4提供了Plugin方式， 来更好帮助我们做如上的这些扩展。</p>
+<h2 id="介绍Plugin-和-Module的关系"><a href="#介绍Plugin-和-Module的关系" class="headerlink" title="介绍Plugin 和 Module的关系 "></a><font color="#0000FF">介绍Plugin 和 Module的关系 </font></h2><p>UE4下的Module &amp; Plugin是两个不同的概念, 我们可以使用Module对原生的Actor, Component以及Component Visualizer等进行功能性的扩展,也可以对UPROPERTY的细节面板进行扩展;<br>Plugin则允许我们对Module做一些封装之后的功能扩展。</p>
+<p>一个Plugin可以由多个Module组成, Module只能由代码组成, 而Plugin可以由代码和资源组成;<br>Plugin可以编译之后打包跨工程使用,保持代码的独立性。而Module在工程里的耦合则较高，是代码级别的直接引用。</p>
+<p>Module可以Hot reload而Plugin需要走源码的重新编译或者命令行的UAT编译。</p>
+<h2 id="Plugin的组成"><a href="#Plugin的组成" class="headerlink" title="Plugin的组成 "></a><font color="#0000FF">Plugin的组成 </font></h2><h3 id="类型选择"><a href="#类型选择" class="headerlink" title="类型选择: "></a><font color="#00AAFF">类型选择: </font></h3><ul>
+<li>Blank : 空白插件, 所有内容都要从头设置;</li>
+<li>Content Only : 只包含内容的插件;</li>
+<li>Blueprint Library : 包含蓝图函数库;</li>
+<li>Editor Toolbar Button : 在工具栏添加一个工具栏的按钮;</li>
+<li>Editor Standalone Window : 工具栏中添加一个按钮,且这个按钮能唤出一个独立窗口;</li>
+<li>Editor Mode : 创建一个将包含有编辑器模式的插件;</li>
+<li>Third Party Library : 创建一个包含、加载和使用第三方库的插件;</li>
+</ul>
+<p>这里大家可以根据需求来选择不同类型。</p>
+<h3 id="Plugin结构："><a href="#Plugin结构：" class="headerlink" title="Plugin结构："></a><font color="#00AAFF">Plugin结构：</font></h3><p><img src="/2019/02/14/Extending_the_UE4_Editor_1/Extending_the_UE4_Editor_1-7233a5a4.png" alt></p>
+<ul>
+<li>Content : 存放一些美术资源。</li>
+<li>Source ： 代码目录，根据需求可以划分多个module结构   </li>
+<li>.uplugin文件  ： uplugin配置文件， 详细参数看<a href="https://docs.unrealengine.com/en-us/Programming/Plugins" target="_blank" rel="noopener">官网</a> 和 <a href="https://docs.unrealengine.com/en-us/Programming/Plugins#codeinplugins" target="_blank" rel="noopener">这里</a>。</li>
+</ul>
+<h3 id="Module结构："><a href="#Module结构：" class="headerlink" title="Module结构："></a><font color="#00AAFF">Module结构：</font></h3><p><img src="/2019/02/14/Extending_the_UE4_Editor_1/Extending_the_UE4_Editor_1-36c0d8a5.png" alt></p>
+<ul>
+<li>Public中存放一些对外开放的头文件;</li>
+<li>Private里一般存放实现的源码文件或者一些不需要开放的头文件;</li>
+<li>Classes由于历史原因, 一般用来存放一些对UObject文件进行扩展的类;</li>
+</ul>
+<p>如果引用其他的Module, Private只能引用其他Module的Private内的文件, 如果引用其他Module的Public会报错;<br>一般来说会创建多个Module来构成一个插件, 例如Editor部分和非Editor部分。</p>
+<p>简单介绍下Module的配置文件:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">public PathFollowerEditor(ReadOnlyTargetRules Target) : base(Target)</span><br><span class="line">&#123;</span><br><span class="line">    PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;</span><br><span class="line">    string EngineDir = Path.GetFullPath(Target.RelativeEnginePath);</span><br><span class="line"></span><br><span class="line">    //开放给其他模块引用的公共头文件路径;</span><br><span class="line">    PublicIncludePaths.AddRange</span><br><span class="line">    (</span><br><span class="line">	new string[] &#123;&#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    //模块内包含的私有头文件路径, 使用时可以省去相对路径;</span><br><span class="line">    PrivateIncludePaths.AddRange</span><br><span class="line">    (</span><br><span class="line">	new string[] &#123;&#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    //public目录下头文件需要访问的模块</span><br><span class="line">    PublicIncludePathModuleNames.AddRange</span><br><span class="line">    (</span><br><span class="line">	new string[] &#123;&#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    //private目录下头文件需要访问的模块</span><br><span class="line">    PrivateIncludePathModuleNames.AddRange</span><br><span class="line">    (</span><br><span class="line">	new string[] &#123;&#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    //public source中依赖的模块, 参与链接</span><br><span class="line">    PublicDependencyModuleNames.AddRange</span><br><span class="line">    (</span><br><span class="line">        new string[] &#123;&quot;PathFollower&quot;,&#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    //private source中依赖的模块, 参与链接</span><br><span class="line">    PrivateDependencyModuleNames.AddRange</span><br><span class="line">    (</span><br><span class="line">	new string[]&#123;&#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    //运行时动态链接的一些Module;</span><br><span class="line">    DynamicallyLoadedModuleNames.AddRange</span><br><span class="line">    (</span><br><span class="line">	new string[]&#123;&#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    //依赖的第三方Lib的列表;</span><br><span class="line">    PublicLibraryPaths.AddRange</span><br><span class="line">    (</span><br><span class="line">	new string[]&#123;&#125;</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    //延迟加载的DLL, 常用语外部的第三方模块;</span><br><span class="line">    PublicDelayLoadDLLs.AddRange</span><br><span class="line">    (</span><br><span class="line">	new string[]&#123;&#125;</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="实战-创建新Asset类型"><a href="#实战-创建新Asset类型" class="headerlink" title="实战:创建新Asset类型 "></a><font color="#0000FF">实战:创建新Asset类型 </font></h2><p><img src="/2019/02/14/Extending_the_UE4_Editor_1/Extending_the_UE4_Editor_1-b32f4a56.png" alt></p>
+<p>在UE4中, 我们可能需要在内容浏览器中新建一个自定义的Object对象保存到文件中，并且还可能需要与之关联的自定义编辑器窗口。那我们来梳理下实现的大致流程：</p>
+<h3 id="1，创建一个新Plugin及Module"><a href="#1，创建一个新Plugin及Module" class="headerlink" title="1，创建一个新Plugin及Module "></a><font color="#00AAFF">1，创建一个新Plugin及Module </font></h3><p>新建一个空白的Plugin, 然后自行添加需要的Module</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">class FPathFollowerEditorModule : public IModuleInterface</span><br><span class="line">&#123;</span><br><span class="line">public:</span><br><span class="line"></span><br><span class="line">	/** IModuleInterface implementation */</span><br><span class="line">	virtual void StartupModule() override;</span><br><span class="line">	virtual void ShutdownModule() override;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>根据需要创建自己需要的Module, 并在对应的StartupModule中进行初始化。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">void FPathFollowerEditorModule::StartupModule()</span><br><span class="line">&#123;</span><br><span class="line">	//后续在这里进行该Asset文件的Action注册</span><br><span class="line">	/*IAssetTools&amp; AssetTools = FModuleManager::LoadModuleChecked&lt;FAssetToolsModule&gt;(&quot;AssetTools&quot;).Get();</span><br><span class="line">	EAssetTypeCategories::Type m_AbleAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT(&quot;Path Follower&quot;)), LOCTEXT(&quot;PathFollowerAssetCategory&quot;, &quot;Path Follower&quot;));</span><br><span class="line">	TSharedRef&lt;IAssetTypeActions&gt; AbilityBlueprint = MakeShareable(new FAssetTypeActions_PathFollowerBlueprint(m_AbleAssetCategory));</span><br><span class="line">	AssetTools.RegisterAssetTypeActions(AbilityBlueprint);*/</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void FAceEditorModule::ShutdownModule()</span><br><span class="line">&#123;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2，自定义Asset文件的蓝图类"><a href="#2，自定义Asset文件的蓝图类" class="headerlink" title="2，自定义Asset文件的蓝图类 "></a><font color="#00AAFF">2，自定义Asset文件的蓝图类 </font></h3><p>每个Asset文件都需要对应一个UBlueprint类对象, 这里一般分两步来实现:</p>
+<ul>
+<li>实现UBlueprintGeneratedClass作为蓝图类生成的静态类</li>
+<li>实现UBlueprint类</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">class  UPathFollowerBlueprintGeneratedClass : public UBlueprintGeneratedClass</span><br><span class="line">&#123;</span><br><span class="line">	GENERATED_UCLASS_BODY()</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class UPathFollowerBlueprint : public UBlueprint</span><br><span class="line">&#123;</span><br><span class="line">	GENERATED_UCLASS_BODY()</span><br><span class="line"></span><br><span class="line">public:</span><br><span class="line">	//这个函数最重要</span><br><span class="line">	virtual UClass* GetBlueprintClass() const</span><br><span class="line">	&#123;</span><br><span class="line">		return UPathFollowerBlueprintGeneratedClass::StaticClass();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-新建一个Asset文件对应的Factory"><a href="#3-新建一个Asset文件对应的Factory" class="headerlink" title="3, 新建一个Asset文件对应的Factory "></a><font color="#00AAFF">3, 新建一个Asset文件对应的Factory </font></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">UPathFollowerBlueprintFactory::UPathFollowerBlueprintFactory(const FObjectInitializer&amp; ObjectInitializer)</span><br><span class="line">	: Super(ObjectInitializer)</span><br><span class="line">&#123;</span><br><span class="line">	bCreateNew = true;</span><br><span class="line">	bEditAfterNew = true;</span><br><span class="line">	SupportedClass = UPathFollowerBlueprint::StaticClass();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">UObject* UPathFollowerBlueprintFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn, FName CallingContext)</span><br><span class="line">&#123;</span><br><span class="line">	//这里从另外一个蓝图中Copy过来, 省去需要重新创建蓝图内容.</span><br><span class="line">	FString bpFile = TEXT(&quot;/PathFollower/FollowSplinePath&quot;);</span><br><span class="line">	UObject* loadedObject = StaticLoadObject(UObject::StaticClass(), nullptr, *bpFile);</span><br><span class="line">	UBlueprint* castedBlueprint = Cast&lt;UBlueprint&gt;(loadedObject);</span><br><span class="line">	UBlueprint* ret = FKismetEditorUtilities::ReplaceBlueprint(NewBP, castedBlueprint);</span><br><span class="line"></span><br><span class="line">	if (ret != nullptr) return ret;</span><br><span class="line"></span><br><span class="line">	return nullptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这两个函数相对比较重要, 我们在这个新的Asset的Factory的构造函数里返回当前Factory所支持的Asset类型, 然后在<br>FactoryCreateNew中代码实现新建一个Asset的操作。这里实现的是在一个已知的Blueprint中直接拷贝过来, 作为对象返回出去。这里我们还可以对这个对象做一些个性化实现，例如多Add 一些Component之类。</p>
+<h3 id="4-绑定Asset到BlueprintEditor"><a href="#4-绑定Asset到BlueprintEditor" class="headerlink" title="4, 绑定Asset到BlueprintEditor "></a><font color="#00AAFF">4, 绑定Asset到BlueprintEditor </font></h3><p>每一个Asset文件都要绑定一个BlueprintEditor类, 就算不做任何自定义的操作也需要绑定一个继承了BlueprintEditor的默认类, 并执行基类的InitBlueprintEditor。这样UE会根据Asset的基类去查找对应的蓝图编辑窗口。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">class FPathFollowerEditor : public FBlueprintEditor</span><br><span class="line">&#123;</span><br><span class="line">public:</span><br><span class="line">	void InitPathFollowerEditor(const EToolkitMode::Type Mode, const TSharedPtr&lt;IToolkitHost&gt;&amp; InitToolkitHost, const TArray&lt;UBlueprint*&gt;&amp; InAbilityBlueprints, bool ShouldUseDataOnlyEditor)</span><br><span class="line">	&#123;</span><br><span class="line">		TArray&lt;UObject*&gt; ObjectsBeingEditted;</span><br><span class="line">		for (UBlueprint* BP : InAbilityBlueprints)</span><br><span class="line">			ObjectsBeingEditted.Add(BP);</span><br><span class="line"></span><br><span class="line">		// Initialize the asset editor and spawn tabs</span><br><span class="line">		const TSharedRef&lt;FTabManager::FLayout&gt; DummyLayout = FTabManager::NewLayout(&quot;NullLayout&quot;)-&gt;AddArea(FTabManager::NewPrimaryArea());</span><br><span class="line">		const bool bCreateDefaultStandaloneMenu = true;</span><br><span class="line">		const bool bCreateDefaultToolbar = true;</span><br><span class="line"></span><br><span class="line">		InitBlueprintEditor(Mode, InitToolkitHost, InAbilityBlueprints, false);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-响应AssetTypeActions"><a href="#5-响应AssetTypeActions" class="headerlink" title="5, 响应AssetTypeActions "></a><font color="#00AAFF">5, 响应AssetTypeActions </font></h3><p>Asset文件需要绑定一个FAssetTypeActions_ClassTypeBase类, 作为一些基本操作的响应, 例如打开、合并和差异化比较等。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">class ASSETTOOLS_API FAssetTypeActions_Blueprint : public FAssetTypeActions_ClassTypeBase</span><br><span class="line">&#123;</span><br><span class="line">public:</span><br><span class="line">	// IAssetTypeActions Implementation</span><br><span class="line">	virtual FText GetName() const override &#123; return NSLOCTEXT(&quot;AssetTypeActions&quot;, &quot;AssetTypeActions_Blueprint&quot;, &quot;Blueprint Class&quot;); &#125;</span><br><span class="line">	virtual FColor GetTypeColor() const override &#123; return FColor( 63, 126, 255 ); &#125;</span><br><span class="line">	virtual UClass* GetSupportedClass() const override &#123; return UBlueprint::StaticClass(); &#125;</span><br><span class="line">	virtual bool HasActions ( const TArray&lt;UObject*&gt;&amp; InObjects ) const override &#123; return true; &#125;</span><br><span class="line">	virtual void GetActions( const TArray&lt;UObject*&gt;&amp; InObjects, FMenuBuilder&amp; MenuBuilder ) override;</span><br><span class="line">	virtual void OpenAssetEditor(const TArray&lt;UObject*&gt;&amp; InObjects, TSharedPtr&lt;class IToolkitHost&gt; EditWithinLevelEditor = TSharedPtr&lt;IToolkitHost&gt;()) override;</span><br><span class="line">	virtual bool CanMerge() const override;</span><br><span class="line">	virtual void Merge(UObject* InObject) override;</span><br><span class="line">	virtual void Merge(UObject* BaseAsset, UObject* RemoteAsset, UObject* LocalAsset, const FOnMergeResolved&amp; ResolutionCallback) override;</span><br><span class="line">	virtual uint32 GetCategories() override &#123; return EAssetTypeCategories::Blueprint | EAssetTypeCategories::Basic; &#125;</span><br><span class="line">	virtual void PerformAssetDiff(UObject* Asset1, UObject* Asset2, const struct FRevisionInfo&amp; OldRevision, const struct FRevisionInfo&amp; NewRevision) const override;</span><br><span class="line">	virtual class UThumbnailInfo* GetThumbnailInfo(UObject* Asset) const override;</span><br><span class="line">	virtual FText GetAssetDescription(const FAssetData&amp; AssetData) const override;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>到这一步, 我们都准备好了。最后只需要执行一步在StartModule里的注册就可以， 回到步骤1打开如下注释的代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">void FPathFollowerEditorModule::StartupModule()</span><br><span class="line">&#123;</span><br><span class="line">	IAssetTools&amp; AssetTools = FModuleManager::LoadModuleChecked&lt;FAssetToolsModule&gt;(&quot;AssetTools&quot;).Get();</span><br><span class="line">	EAssetTypeCategories::Type m_AbleAssetCategory = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT(&quot;Path Follower&quot;)), LOCTEXT(&quot;PathFollowerAssetCategory&quot;, &quot;Path Follower&quot;));</span><br><span class="line">	TSharedRef&lt;IAssetTypeActions&gt; AbilityBlueprint = MakeShareable(new FAssetTypeActions_PathFollowerBlueprint(m_AbleAssetCategory));</span><br><span class="line">	AssetTools.RegisterAssetTypeActions(AbilityBlueprint);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-总结流程"><a href="#6-总结流程" class="headerlink" title="6, 总结流程 "></a><font color="#00AAFF">6, 总结流程 </font></h3><p><img src="/2019/02/14/Extending_the_UE4_Editor_1/Extending_the_UE4_Editor_1-84fedf07.png" alt></p>
+<!-- ![](Extending_the_UE4_Editor_1/Extending_the_UE4_Editor_1-30a9f117.png) -->
+
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语 "></a><font color="#0000FF">结语 </font></h2><p>到这里给大家简单介绍了下扩展实现一个Plugin大致的实现步骤，当然实现的时候会涉及很多的细节。但是看到这里大家应该对如何实现一个Plugin有了初步的认知, 最终实现一个高质量的Plugin的关键还是在于我们的想法和创意。</p>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现 "></a><font color="#0000FF">代码实现 </font></h2><p><a href="https://git.code.oa.com/pzzheng/PathFollower" target="_blank" rel="noopener">https://git.code.oa.com/pzzheng/PathFollower</a></p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接 "></a><font color="#0000FF">参考链接 </font></h2><p><a href="https://docs.unrealengine.com/en-us/Programming/Plugins" target="_blank" rel="noopener">https://docs.unrealengine.com/en-us/Programming/Plugins</a><br><a href="https://answers.unrealengine.com/storage/attachments/242402-ue4-extension-uod-20180524-chaiyuntian.zip" target="_blank" rel="noopener">https://answers.unrealengine.com/storage/attachments/242402-ue4-extension-uod-20180524-chaiyuntian.zip</a></p>
+
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/UE4/">UE4</a>
+            <a href="/tags/Plugin/">Plugin</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2019/03/14/Extending_the_UE4_Editor_2/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">UE4下编辑器扩展-- (2) Plugin下自定义编辑窗口</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2018/12/15/UE4_Learn_Sequencer/">
+        <span class="next-text nav-default">UE4 学习笔记 (三) Sequencer工具学习</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zpzsoft@email.com" class="iconfont icon-email" title="email"></a>
+        <a href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2019<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Arenas Zheng</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/pjax/jquery.pjax.min.js"></script>
+  <script type="text/javascript" src="/lib/nprogress/nprogress.min.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.11.0"></script>
+</body>
+</html>

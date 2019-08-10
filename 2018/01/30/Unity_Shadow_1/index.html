@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+<meta name="theme-color" content="#f8f5ec">
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="Unity下阴影的实现--模仿<模拟城市>全局阴影"><meta name="keywords" content="阴影, Shadow, One Man With Dream"><link rel="alternate" href="/default" title="One Man With Dream"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0">
+<link rel="canonical" href="http://arenas0.com/2018/01/30/Unity_Shadow_1/">
+
+<link rel="stylesheet" type="text/css" href="/lib/nprogress/nprogress.min.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0">
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":"","fancybox":"","pjax":true,"latex":false};
+</script>
+
+    <title>Unity下阴影的实现--模仿<模拟城市>全局阴影 - One Man With Dream</模拟城市></title>
+  </head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">One Man With Dream</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/about">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">Unity下阴影的实现--模仿<模拟城市>全局阴影
+        </模拟城市></h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2018-01-30
+        </span><span class="post-category">
+            <a href="/categories/3D编程/">3D编程</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-content"><p>游戏中为了表现更多的细节，实时阴影可能是我们开发过程中常见的需求。随着现在手游质量的越来越高， 很多游戏中也都把阴影作为一个比较大的亮点来展示。比如两年前上线的&lt;功夫熊猫&gt;， 大规模的为全屏角色采用动态阴影，在当时看起来效果还是很赞的。<br>当然根据不同类型的游戏类型不同， 在Unity上采用的实时阴影的方法也各有不同， 常用的大致有如下几种。</p>
+<ul>
+<li>LightMap ： 优点：对于一些静态的场景这个方案可能是性价比最高的一个方案， 缺点：只能是静态烘培，对一些大的场景LightMap体贴占内存可能会很大。</li>
+<li>Projector  ：优点：可以很自由的控制， 缺点：绘制影子的对象无法Batch</li>
+<li>ShadowMap：优点：获取深度图之后可以对更大范围的物体进行投影 缺点：实现代码量较多<br>那回到我们如上标题的目标诉求上来说，如果想实现模拟城市的类似效果， 我们该如何选择 ？</li>
+</ul>
+<h3 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h3><p>既然我们的目标是类似&lt;模拟城市&gt;的效果， 那最好的办法就是看下它是如何实现的。这里我们借助AdrenoProfiler对手机上的SimCity&lt;模拟城市&gt;进行抓帧取样， 看下具体的实现过程。这里细节不介绍， 想了解这个工具的看下这里。<br>在其中绘制地面的一个Shader中我们看到这样一段：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">lowp float shadowTest(highp vec3 texCoord)</span><br><span class="line">&#123;</span><br><span class="line">	lowp float shadow = 1.0;</span><br><span class="line">	const highp float depthOffset = 0.002;</span><br><span class="line"></span><br><span class="line">	highp float shadowDepth = texture2D(inSampler3, texCoord.xy).r;</span><br><span class="line">	//if (texCoord.z &gt; shadowDepth) shadow = 0.0;</span><br><span class="line">	return step(texCoord.z, shadowDepth + depthOffset);</span><br><span class="line">	//return shadow;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有经验的开发者看到这段代码就能猜出它的实现方式，没错确实是Shadowmap。结合下面我们在导出的Texture中的这样图， 基本确认无疑(大家注意看图片的边缘留了一个像素左右的白边, 后面讲原因)：<br><img src="/2018/01/30/Unity_Shadow_1/1516536315564.png" alt="Alt text"><br>这张是当前视窗下的深度图， 根据这个图上渠道的RGB对渲染的Fragment做颜色计算， 也就是下面这段（关键代码）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">void main(void)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">	lowp float shadow;</span><br><span class="line">	shadow = shadowTest(outDepth);</span><br><span class="line">	......</span><br><span class="line">	lowp vec4 lighting = vec4(outColourAmb + ppl * shadow * outColourDif, 1.0);</span><br><span class="line">	......</span><br><span class="line">	gl_FragColor = res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="实现过程"><a href="#实现过程" class="headerlink" title="实现过程"></a>实现过程</h3><p>那大致明白了目标游戏的实现方法了， 我们得在Unity下实现类似的流程。大致细分为如下这几步：</p>
+<ul>
+<li>如何获屏幕内容的深度图 ?</li>
+<li>如何对深度图进行采样计算阴影面积 ?</li>
+</ul>
+<p>问题1：如何获屏幕内容的深度图 ？<br>Unity下获取深度的方式有很多种，有很多文章可以参考。这里不细讲，主要讲下这几点考虑：<br>1， 使用Unity自身提供的_CameraDepthTexture可以很方便的获取到深度图，但是开启深度渲染会导致场景内DrawCall翻倍，场景内物件较多这个方法不考虑。<br>2， 用两个摄像机结合Camera1.RenderTexture.DepthBuffer + Camera2.RenderTexture.Color组合起来， 最后将结果Blit到屏幕上，这个没有尝试。<br>3， 使用独立一个摄像机，在灯光坐标系下对整个场景渲染深度图<br>我这个采用的是第三种方法, 关键的实现代码如下：<br>对获取深度信息的摄像机挂载脚本， 使用RenderWithShader在Update中获取场景实时渲染的深度图。这里要注意计算最小视椎体可以提高阴影的质量， 还可以看下对RenderTexture的Anti-Aliasing进行设置:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">v2f vert(appdata_base v) </span><br><span class="line">&#123;</span><br><span class="line">	v2f o;</span><br><span class="line">	o.position = UnityObjectToClipPos(v.vertex);</span><br><span class="line">	o.depth    = o.position.zw;</span><br><span class="line">	return o;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">float4 frag(v2f i) : COLOR </span><br><span class="line">&#123;</span><br><span class="line">	float value = i.depth.x / i.depth.y &gt; 0 ? 0 : 1;</span><br><span class="line">	return fixed4(value, value, value, 1);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在C#中对主摄像机的视椎体进行计算, 然后初始化一个最小的Orthogrphic 远近Clip Plane。主要是UpdateClipPlane 和 UpdateDepthCamera函数中有实现。</p>
+<p>在C#下将光源坐标ViewProjection坐标系传递到Shader中， 方便做采样时坐标系的转换：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Matrix4x4 world2View = m_DepthCamera.worldToCameraMatrix;</span><br><span class="line">Matrix4x4 projection = GL.GetGPUProjectionMatrix(m_DepthCamera.projectionMatrix, false);</span><br><span class="line">m_LightVPMatrix = projection * world2View;</span><br><span class="line">Shader.SetGlobalMatrix(&quot;_LightViewClipMatrix&quot;, m_LightVPMatrix);</span><br></pre></td></tr></table></figure>
+
+<p>对需要投影的屏平面或物体获取深度图像素信息之后进行计算:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">//Comppute in light space.</span><br><span class="line">float4 posInLight = ComputeScreenPosInLight(mul(_LightViewClipMatrix, float4(i.worldPos, 1)));</span><br><span class="line">float depth = tex2D(_ShadowDepthTex, posInLight.xy/ posInLight.w).r;</span><br><span class="line"></span><br><span class="line">//Discard border. Use glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color) in OpenGL.</span><br><span class="line">float white = posInLight.x &lt; 0.0 ? 1.0 : (posInLight.x &gt; 1.0 ? 1.0 : (posInLight.y &lt; 0.0 ? 1.0 : (posInLight.y &gt; 1.0 ? 1.0 : 0.0)));</span><br><span class="line">if (white &gt; 0.5) depth = 1.f;</span><br></pre></td></tr></table></figure>
+
+<p>这里是个小技巧, 如果不做Discard border 的处理会出现如下的效果:<br><img src="/2018/01/30/Unity_Shadow_1/1517311393234.png" alt="Alt text"><br>Unity中对RenderTexture的Clamp是如下定义:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">TextureWrapMode.Clamp</span><br><span class="line">Clamps the texture to the last pixel at the edge.</span><br></pre></td></tr></table></figure>
+
+<p>因为RenderTexture的Wrap Mode选择了Clamp之后, 如果碰到超出UV范围的边界获取颜色, 就会默认取最边缘的像素。之前版本中提供的SetBorderColor已经飞起, 所以无法像OpenGL中设置texture的边缘颜色, 也是上面提到&lt;模拟城市&gt;的深度贴图对边缘都做了一像素的留白效果也也正是这个方法。这里我们做个小技巧， 超过边缘范围的默认depth = 1。<br>最终效果如下:<br><img src="/2018/01/30/Unity_Shadow_1/ShadowMap.gif" alt="Alt text"></p>
+<h3 id="遗留问题"><a href="#遗留问题" class="headerlink" title="遗留问题"></a>遗留问题</h3><p> 还有很多细节的问题篇幅问题没有在这里讨论， 后续计划再详细展开几篇对阴影这块的实现，这里感觉还是蛮有料的。例如：Planar Shadow、Shadow Volume的实现，已经Shaodw Ance、Peter Panning等问题。<br>PS：实现的过程中也再次发现已经眼高手低的问题， 很多细节都是一知半解。通过这些实现感觉可以把一些流程理清楚很多，一点点积累把！</p>
+<p>Talk Is Cheap !</p>
+<h3 id="本文涉及所有代码皆上传Github"><a href="#本文涉及所有代码皆上传Github" class="headerlink" title="本文涉及所有代码皆上传Github"></a>本文涉及所有代码皆上传Github</h3><p><a href="https://github.com/zpzsoft/ShadowMap" target="_blank" rel="noopener">https://github.com/zpzsoft/ShadowMap</a></p>
+
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/阴影/">阴影</a>
+            <a href="/tags/Shadow/">Shadow</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2018/02/15/Learn_3D_Engine_1/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">一步一步学3D引擎 -- (1) 软件光栅化渲染器</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2017/11/09/Display_2D_In_3D_Scene/">
+        <span class="next-text nav-default">3D场景中2D人物剪裁</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zpzsoft@email.com" class="iconfont icon-email" title="email"></a>
+        <a href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2019<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Arenas Zheng</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/pjax/jquery.pjax.min.js"></script>
+  <script type="text/javascript" src="/lib/nprogress/nprogress.min.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.11.0"></script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+<meta name="theme-color" content="#f8f5ec">
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="UE4 学习笔记 (三) Sequencer工具学习"><meta name="keywords" content="UE4, Sequencer, One Man With Dream"><link rel="alternate" href="/default" title="One Man With Dream"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0">
+<link rel="canonical" href="http://arenas0.com/2018/12/15/UE4_Learn_Sequencer/">
+
+<link rel="stylesheet" type="text/css" href="/lib/nprogress/nprogress.min.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0">
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":"","fancybox":"","pjax":true,"latex":false};
+</script>
+
+    <title>UE4 学习笔记 (三) Sequencer工具学习 - One Man With Dream</title>
+  </head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">One Man With Dream</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/about">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">UE4 学习笔记 (三) Sequencer工具学习
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2018-12-15
+        </span><span class="post-category">
+            <a href="/categories/UE4/">UE4</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-content"><p>Sequencer是UE4官方提供的唯二的过场动画编辑工具之一， 也是最新的那一个。本身提供的功能非常强大，基本你能想到的都有了！下面简单介绍下自己学习这个工具几天来的一点经验汇总。</p>
+<p><img src="/2018/12/15/UE4_Learn_Sequencer/1EE8E751-3BA2-4498-AFC0-484FEC9FA41D.png" alt="Alt text"></p>
+<h3 id="What"><a href="#What" class="headerlink" title="What"></a>What</h3><p>开头已经简单介绍了，一般游戏开发过程中或者CG中都会需要用到一些过场动画，例如一些游戏剧情的展开；一段摄像机镜头的运用；或者一段战斗的前置打斗，等等这些的实现不可能都是由程序手动去Code实现，因为一来这块的开发内容基本都是不可重用的，程序复用性较低，二是这块的细节的修改非常频繁，可能哪天策划一个脑热想修改某些细节甚至重做。那这些情况在我们游戏开发过程中是一直存在的，而且是发生概率非常高的。<br>Sequencer的出现就是为了解决这个开发痛点，这里本人对老版本的Matainee没有研究，直接用的最新版本的Sequencer。</p>
+<h3 id="How"><a href="#How" class="headerlink" title="How"></a>How</h3><p>如何用这个工具，这个话题太大了，也不是一两句话能汇总的。本人能力有限，也只能在这里给大家归类汇总下官方教程的学习流程：<br>首先上来第一步，建议大家按照<a href="https://api.unrealengine.com/INT/Engine/Sequencer/QuickStart/index.html" target="_blank" rel="noopener">入门教程</a>一步步先做下找找感觉。<br>然后就可以开始参考<a href="https://api.unrealengine.com/CHN/Engine/Sequencer/HowTo/index.html" target="_blank" rel="noopener">操作指南</a>撸每个细节的功能。<br>官方已经分了初级，中级，高级的难度。也可以根据自己的兴趣选择感兴趣的功能学习，反正我是撸了一个星期。😓</p>
+<p>这里说下我自己遇到的一个问题吧，官方教程本身分Doc 和 API 两套， 其中API中是可以切换到简体中文的，对于英语不好的同学简直是。。。 But，我想说Doc和API，以及API中英文和中文的内容都可能不一样，莫办法。简体中文的翻译总是会延迟一点~</p>
+<p>TIPS：还有具体使用Doc还是API版本，看你个人习惯。这里提醒大家一点看清楚顶部的引擎版本。本人就遇到一次用4.21的doc去学习新功能，结果在自己的引擎里怎么也找不到对应的操作菜单的蠢事。被自己蠢😢了</p>
+<h3 id="Why"><a href="#Why" class="headerlink" title="Why"></a>Why</h3><p>下面结合本人的一点学习经验，把自己学习的过程中的一点疑问QA下，希望能对你有帮助：</p>
+<blockquote>
+<p><strong>Q : <em>对象如何在Sequencer中动态生成或者复用 ？</em></strong><br><strong>A：如果是多人协作开发的游戏，那我们必然会遇到资源管理的问题。不太可能在做过场动画过场中对任意需要的直接直接拖过来就用。肯定得考虑一些资源复用或者重用的问题。</strong><br> <br><br><img src="/2018/12/15/UE4_Learn_Sequencer/FE3F8BA0-F17D-4F77-B7A7-30DB20251850.png" alt="Alt text"><br> <br><br><strong>UE里已经想到了这点，目前看它提供了如下两个方式来解决这个问题：</strong><br><strong>1. <a href="https://docs.unrealengine.com/en-us/Engine/Sequencer/HowTo/Spawnables" target="_blank" rel="noopener">Convert to Spawnable</a> ： 个人的理解是这里在Sequencer中只是存储的是对象的引用，当运行的时候再生产对应的对象，而不是资源跟着场景绑定。</strong><br><strong>2. <a href="https://docs.unrealengine.com/en-us/Engine/Sequencer/HowTo/AnimateDynamicObjects" target="_blank" rel="noopener">Actor Rebinding in</a> ：<br>这个功能就有点厉害了，可以允许我们在制作的时候建一个空的对象去做各种轨迹运动等，然后再在蓝图里动态的把他替换成我们想要的Actor，可能是我们在游戏里动态生成的对象但一定是能在蓝图中取到的对象。</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>Q : <em>有几种方式去播放Sequencer ？</em></strong><br><strong>A：一般有两种，一种设置为场景运行之后自动播放，另外一种是在蓝图里根据外部条件去动态的触发。个人感觉后者应该会更常用点~</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>Q : <em>如何与蓝图中的功能进行交互 ？</em></strong><br><strong>A：被动触发这个就不说了，毕竟是Sequencer自己控制不了的。我们说说主动调用，一般如果我们想主动在某一帧去调用蓝图中的事件，可以考虑使用Event Track中的Custom Event来实现，既在Sequencer中调用指定的Event Name并传参数过去。我想这个Track应该能引发你无限的遐想吧😁</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>Q : <em>如何集成有复杂交互的UI ？</em></strong><br><strong>A：设想下一些剧情动画过程中可能会有某几个NPC发生了一段剧情对话，那这里可能就得和UI进行频繁的交互。这块看官方的教程里很少涉及，个人初步的设想是在BluePrint层对UI调用封装好，然后通过Custom Event去触发调用。这块有待后续的实践😢</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>Q : <em>美术是否可以在Maya或者3D Max里进行过场动画的制作，然后直接导入UE4中 ？</em></strong><br><strong>A：先说个人研究之后的结论：不行！</strong><br><strong>UE官方的推荐做法是可以看<a href="https://docs.unrealengine.com/en-us/Engine/Sequencer/Workflow/ImportExport" target="_blank" rel="noopener">这篇</a>，说下个人的理解。UE官方的推荐做法是提前在UE下使用Sequencer来进行整体布局，把对应需要参与该场景动画的资源准备好。然后再把这些资源导出为FBX，然后再到3DMax或者Maya里进行编辑，编辑完成之后再导入UE中直接用。</strong><br><strong>细心的同学可能已经发现了，其实这个流程和美术期望的流程还是不一样的。多了第一步要提前在UE里编辑的过程，反正我们项目组的美术同学是拒绝的</strong><br>   <strong>我们目前的制作方式是：</strong></p>
+<ol>
+<li>美术同学在Maya中制作整体过场动画，包括模型、动画和摄像机动画；</li>
+<li>美术制作完成之后分摄像机动画和其他模型资源统一导出；</li>
+<li>策划同学在Sequencer中把如上的美术资源单独在拼一遍。</li>
+</ol>
+</blockquote>
+<h3 id="TIPS"><a href="#TIPS" class="headerlink" title="TIPS"></a>TIPS</h3><p>这里有个小技巧，美术同学可以直接在Maya里把对应参与过场动画的资源的位置按照UE中目标场景中的位置提前去摆放（提前和场景美术沟通好），然后除了摄像机动画可以直接用Maya里直接导入Sequencer中以外（注意两边坐标系的统一）， 其他的模型资源自带的动画和位移旋转都直接导出，策划同学可以直接在Sequencer摆放好，而不用关心一些动画的移动的细节，这个真的很重要！</p>
+<p>当然，这个肯定不是最合理的方案但确实是能最快应用的一个方案。个人觉得，可以尝试在Maya或者3DMax中导出时候实现脚本，把对应的资源按照UE下Sequencer结构进行导出。当然本人对美术软件也不熟悉！继续埋个坑，等待后续慢慢再填！</p>
+
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/UE4/">UE4</a>
+            <a href="/tags/Sequencer/">Sequencer</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2019/02/14/Extending_the_UE4_Editor_1/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">UE4下编辑器扩展-- (1) Plugin开发概要</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2018/12/04/UE_Learn_PhysicCollider/">
+        <span class="next-text nav-default">UE4 学习笔记 (二) 记一次物理碰撞无法生效的解决</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zpzsoft@email.com" class="iconfont icon-email" title="email"></a>
+        <a href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2019<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Arenas Zheng</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/pjax/jquery.pjax.min.js"></script>
+  <script type="text/javascript" src="/lib/nprogress/nprogress.min.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.11.0"></script>
+</body>
+</html>

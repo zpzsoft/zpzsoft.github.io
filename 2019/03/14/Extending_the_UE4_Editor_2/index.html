@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+<meta name="theme-color" content="#f8f5ec">
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="UE4下编辑器扩展-- (2) Plugin下自定义编辑窗口"><meta name="keywords" content="UE4, Plugin, One Man With Dream"><link rel="alternate" href="/default" title="One Man With Dream"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0">
+<link rel="canonical" href="http://arenas0.com/2019/03/14/Extending_the_UE4_Editor_2/">
+
+<link rel="stylesheet" type="text/css" href="/lib/nprogress/nprogress.min.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0">
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":"","fancybox":"","pjax":true,"latex":false};
+</script>
+
+    <title>UE4下编辑器扩展-- (2) Plugin下自定义编辑窗口 - One Man With Dream</title>
+  </head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">One Man With Dream</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/about">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">UE4下编辑器扩展-- (2) Plugin下自定义编辑窗口
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2019-03-14
+        </span><span class="post-category">
+            <a href="/categories/UE4/">UE4</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-content"><p>在上一篇我们简单介绍了UE4下Plugin的扩展步骤, 这次我们再研究下UE4中实现Custom Editor窗口的过程。</p>
+<p>UE4中我们最常用的编辑窗口就是默认的Level Editor 的窗口, 它提供我们对场景内任意物件进行编辑预览的功能。UE中默认的例如：动作、粒子、角色等，都有一个独立的Editor预览窗口。如果我们想对自定义的Asset文件做一些操作和显示上的自定义，那么我们就需要实现Custom Editor。</p>
+<h4 id="一-常规Editor窗口的组成"><a href="#一-常规Editor窗口的组成" class="headerlink" title="一, 常规Editor窗口的组成"></a>一, 常规Editor窗口的组成</h4><p><img src="/2019/03/14/Extending_the_UE4_Editor_2/Extending_the_UE4_Editor_1-7f77cca4.png" alt></p>
+<p>一个完整的Editor窗口的组成:</p>
+<h6 id="1-顶部菜单栏-快捷菜单的扩展"><a href="#1-顶部菜单栏-快捷菜单的扩展" class="headerlink" title="1, 顶部菜单栏  : 快捷菜单的扩展;"></a>1, 顶部菜单栏  : 快捷菜单的扩展;</h6><h6 id="2-工具栏-工具栏按钮的自定义"><a href="#2-工具栏-工具栏按钮的自定义" class="headerlink" title="2, 工具栏     :  工具栏按钮的自定义;"></a>2, 工具栏     :  工具栏按钮的自定义;</h6><h6 id="3-细节面板-显示细节参数"><a href="#3-细节面板-显示细节参数" class="headerlink" title="3, 细节面板   :  显示细节参数;"></a>3, 细节面板   :  显示细节参数;</h6><h6 id="4-视图窗口-预览对象的窗口-所见即所得"><a href="#4-视图窗口-预览对象的窗口-所见即所得" class="headerlink" title="4, 视图窗口   :  预览对象的窗口, 所见即所得;"></a>4, 视图窗口   :  预览对象的窗口, 所见即所得;</h6><h4 id="二-窗口的布局-简单介绍Slate"><a href="#二-窗口的布局-简单介绍Slate" class="headerlink" title="二, 窗口的布局(简单介绍Slate)"></a>二, 窗口的布局(简单介绍Slate)</h4><p>UE4的Editor下使用Slate来对窗口个的多个子窗口进行布局, 其中SCompoundWidget是窗口组件的主要基类。看下如下代码, 简单熟悉下Slate的语法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">TabLayout = FTabManager::NewLayout(&quot;Ability_AbilityTimelineEditMode_Layout_v1&quot;)</span><br><span class="line">		-&gt;AddArea(</span><br><span class="line">			FTabManager::NewPrimaryArea()</span><br><span class="line">			-&gt;SetOrientation(Orient_Vertical)     //垂直布局</span><br><span class="line">			-&gt;Split</span><br><span class="line">			(</span><br><span class="line">				//Toolbar</span><br><span class="line">				FTabManager::NewStack()</span><br><span class="line">				-&gt;SetSizeCoefficient(0.1f)          //尺寸</span><br><span class="line">				-&gt;SetHideTabWell(true)              //是否隐藏标签页</span><br><span class="line">				-&gt;AddTab(AceEditor-&gt;GetToolbarTabId(), ETabState::OpenedTab)</span><br><span class="line">			)</span><br><span class="line">			-&gt;Split</span><br><span class="line">			(</span><br><span class="line">				//此处是个视图窗口</span><br><span class="line">				FTabManager::NewSplitter()          //新的窗口分隔</span><br><span class="line">				-&gt;SetOrientation(Orient_Horizontal) //水平布局</span><br><span class="line">				-&gt;Split</span><br><span class="line">				(</span><br><span class="line">					FTabManager::NewStack()</span><br><span class="line">					-&gt;SetSizeCoefficient(0.7f)</span><br><span class="line">					-&gt;SetHideTabWell(false)</span><br><span class="line">					-&gt;AddTab(FAceEditorViewportSummoner::ID, ETabState::OpenedTab)</span><br><span class="line">				)</span><br><span class="line">				-&gt;Split</span><br><span class="line">				(</span><br><span class="line">					//此处是属性详细页</span><br><span class="line">					FTabManager::NewStack()</span><br><span class="line">					-&gt;SetSizeCoefficient(0.3f)</span><br><span class="line">					-&gt;SetHideTabWell(false)</span><br><span class="line">					-&gt;AddTab(FAcePropertiesSummoner::ID, ETabState::OpenedTab)</span><br><span class="line">				)</span><br><span class="line">			)</span><br><span class="line">		);</span><br></pre></td></tr></table></figure>
+
+<h4 id="三-构建窗口的过程"><a href="#三-构建窗口的过程" class="headerlink" title="三,构建窗口的过程"></a>三,构建窗口的过程</h4><p>在上一篇中, 我们简单介绍了如果自定义Asset并实现菜单中右键创建的过程。其中在FAssetTypeActions_Blueprint的OpenAssetEditor函数中, 我们将之前在UFactory创建的Asset对象, 传入新创建的Editor的初始化函数中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">void OpenAssetEditor(const TArray&lt;UObject*&gt;&amp; InObjects, TSharedPtr&lt;class IToolkitHost&gt; EditWithinLevelEditor)</span><br><span class="line">&#123;</span><br><span class="line">	EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;</span><br><span class="line"></span><br><span class="line">	for (UObject* Object : InObjects)</span><br><span class="line">	&#123;</span><br><span class="line">		if (UBlueprint* Blueprint = Cast&lt;UBlueprint&gt;(Object))</span><br><span class="line">		&#123;</span><br><span class="line">			bool isFirstCreate = Blueprint-&gt;bIsNewlyCreated;</span><br><span class="line">			TSharedRef&lt;FPathFollowerEditor&gt; Editor(new FPathFollowerEditor());</span><br><span class="line">			TArray&lt;UBlueprint*&gt; Blueprints;</span><br><span class="line">			Blueprints.Add(Blueprint);</span><br><span class="line"></span><br><span class="line">			//这一步很重要</span><br><span class="line">			Editor-&gt;InitEditor(Mode, EditWithinLevelEditor, Blueprints, ShouldUseDataOnlyEditor(Blueprint));</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在来到我们自定义的FBlueprintEditor中, 看下InitEditor的函数实现:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">void InitEditor(const EToolkitMode::Type Mode, const TSharedPtr&lt;IToolkitHost&gt;&amp; InitToolkitHost, const TArray&lt;UBlueprint*&gt;&amp; InBlueprints, bool ShouldUseDataOnlyEditor)</span><br><span class="line">&#123;</span><br><span class="line">	TArray&lt;UObject*&gt; ObjectsBeingEditted;</span><br><span class="line">	for (UBlueprint* BP : InBlueprints)</span><br><span class="line">		ObjectsBeingEditted.Add(BP);</span><br><span class="line"></span><br><span class="line">	//调用默认的蓝图编辑窗口, 如果我们需要自定义就修改这里.</span><br><span class="line">	InitBlueprintEditor(Mode, IniInitEditortToolkitHost, InBlueprints, false);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>InitBlueprintEditor是UE4提供的默认的蓝图类编辑接口, 它会根据我们在工厂类中对我们自定义的蓝图Asset文件的类型来调用对应的蓝图编辑器, 例如是Actor, Animation或者Particle。但是如果我们想实现自定义的蓝图类型， 并且自定义对应的操作，那我们需要在InitEditor函数中进行扩展。</p>
+<p><img src="/2019/03/14/Extending_the_UE4_Editor_2/Extending_the_UE4_Editor_2-defc1ed1.png" alt></p>
+<p>在自定义的InitBlueprintEditor中, 我们通过自定义实现FApplicationMode的方式, 来切换当前运行的模式, 进入如上图所示开始初始化的整个流程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">void InitBlueprintEditor(const EToolkitMode::Type Mode, const TSharedPtr&lt;IToolkitHost&gt;&amp; InitToolkitHost, const TArray&lt;UBlueprint*&gt;&amp; InAbilityBlueprints, bool ShouldUseDataOnlyEditor)</span><br><span class="line">&#123;</span><br><span class="line">	TSharedPtr&lt;FAceEditor&gt; Editor(SharedThis(this));</span><br><span class="line"></span><br><span class="line">	if (!Toolbar.IsValid())</span><br><span class="line">		Toolbar = MakeShareable(new FBlueprintEditorToolbar(SharedThis(this)));</span><br><span class="line"></span><br><span class="line">	TArray&lt;UObject*&gt; ObjectsBeingEditted;</span><br><span class="line">	for(UBlueprint* BP : InAbilityBlueprints)</span><br><span class="line">		ObjectsBeingEditted.Add(BP);</span><br><span class="line"></span><br><span class="line">	//Create mode.</span><br><span class="line">	TSharedRef&lt;FApplicationMode&gt; ViewMode = MakeShareable(new FAceEditorViewMode(Editor));</span><br><span class="line">	AddApplicationMode(ViewMode-&gt;GetModeName(), ViewMode);</span><br><span class="line"></span><br><span class="line">	const TSharedRef&lt;FTabManager::FLayout&gt; DummyLayout = FTabManager::NewLayout(&quot;NullLayout&quot;)-&gt;AddArea(FTabManager::NewPrimaryArea());</span><br><span class="line">	const bool bCreateDefaultStandaloneMenu = true;</span><br><span class="line">	const bool bCreateDefaultToolbar = true;</span><br><span class="line"></span><br><span class="line">	FAssetEditorToolkit::InitAssetEditor(Mode, InitToolkitHost, &quot;AceEditorApp&quot;, DummyLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectsBeingEditted);</span><br><span class="line"></span><br><span class="line">	SetCurrentMode(ViewMode-&gt;GetModeName());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>简单介绍下这几个类的作用及他们的关系:</p>
+<ul>
+<li>SCompoundWidget: 大部分窗口部件的基类;</li>
+<li>FWorkflowTabFactory: FTab标签页自定义工厂;</li>
+<li>FPreviewScene: 封装用于预览或缩略图呈现的场景, 个人理解是主要负责预览场景的渲染;</li>
+<li>FEditorViewportClient: 视图窗口, 对摄像机移动,渲染调试, 鼠标点击等一些操作的高级封装;</li>
+<li>SSingleObjectDetailsPanel: 细节面板的基类, 对一些属性进行可视化编辑</li>
+</ul>
+<p><img src="/2019/03/14/Extending_the_UE4_Editor_2/Extending_the_UE4_Editor_2-d3371e6d.png" alt></p>
+<h4 id="四-延伸扩展"><a href="#四-延伸扩展" class="headerlink" title="四,延伸扩展"></a>四,延伸扩展</h4><p>默认的Custom Editor中的初始化的对象, 只支持点击不支持鼠标移动等操作。如果需要类似Level Editor中的鼠标拖动等操作， 需要对这块的部分接口做扩展。还有一点需要注意的在Editor的下屏幕空间的拾取，决定了窗口里的一些鼠标点击等事件,所以所有需要参与点击类的Component, 必须有AActor作为对应的Owner，否则没法参与屏幕拾取~</p>
+<p><img src="/2019/03/14/Extending_the_UE4_Editor_2/Extending_the_UE4_Editor_2-78feb552.png" alt></p>
+<p>在UE中, 需要渲染的可点击对象都会生成一个HitProxy数据，每一个HitProxy包含一个唯一的INT32的唯一标识码, HitProxyId。在渲染时, UE4会将HitProxyId转换成颜色, 写入一块宽高和屏幕瞪大的数组中, 这就是HitProxyMap。当每次鼠标移动的时候，根据对应屏幕的xy坐标索引得到对应的HitProxyId， 再根据这个Id得到对应的HitProxy数据。</p>
+
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/UE4/">UE4</a>
+            <a href="/tags/Plugin/">Plugin</a>
+            </div>
+        
+        <nav class="post-nav"><a class="next" href="/2019/02/14/Extending_the_UE4_Editor_1/">
+        <span class="next-text nav-default">UE4下编辑器扩展-- (1) Plugin开发概要</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zpzsoft@email.com" class="iconfont icon-email" title="email"></a>
+        <a href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2019<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Arenas Zheng</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/pjax/jquery.pjax.min.js"></script>
+  <script type="text/javascript" src="/lib/nprogress/nprogress.min.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.11.0"></script>
+</body>
+</html>

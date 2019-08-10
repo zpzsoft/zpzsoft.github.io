@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+<meta name="theme-color" content="#f8f5ec">
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="description" content="UE4 学习笔记 (二) 记一次物理碰撞无法生效的解决"><meta name="keywords" content="UE4, Collider, One Man With Dream"><link rel="alternate" href="/default" title="One Man With Dream"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.11.0">
+<link rel="canonical" href="http://arenas0.com/2018/12/04/UE_Learn_PhysicCollider/">
+
+<link rel="stylesheet" type="text/css" href="/lib/nprogress/nprogress.min.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.11.0">
+
+<script id="baidu_push">
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<script>
+  window.config = {"leancloud":{"app_id":null,"app_key":null},"toc":"","fancybox":"","pjax":true,"latex":false};
+</script>
+
+    <title>UE4 学习笔记 (二) 记一次物理碰撞无法生效的解决 - One Man With Dream</title>
+  </head>
+
+  <body><div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/." class="logo">One Man With Dream</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list"><a href="/">
+        <li class="mobile-menu-item">Home
+          </li>
+      </a><a href="/about">
+        <li class="mobile-menu-item">About
+          </li>
+      </a></ul>
+</nav>
+<div class="container" id="mobile-panel">
+      <header id="header" class="header"><div class="logo-wrapper">
+  
+</div>
+
+<nav class="site-navbar"><ul id="menu" class="menu"><li class="menu-item">
+          <a class="menu-item-link" href="/">
+            Home
+            </a>
+        </li>
+      <li class="menu-item">
+          <a class="menu-item-link" href="/about">
+            About
+            </a>
+        </li>
+      </ul></nav>
+</header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content"><article class="post">
+    <header class="post-header">
+      <h1 class="post-title">UE4 学习笔记 (二) 记一次物理碰撞无法生效的解决
+        </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2018-12-04
+        </span><span class="post-category">
+            <a href="/categories/UE4/">UE4</a>
+            </span>
+        </div>
+    </header>
+
+    <div class="post-content"><p>引擎中的物理碰撞检测是我们开发过程中常用的一个功能，最近在学习UE4的过程中尝试初步学习了这部分的模块。遇到Collision无法生效的问题，在这里记录汇总顺便分享下。</p>
+<p>在UE4下发生碰撞，需要满足如下两个条件：</p>
+<ul>
+<li><strong>碰撞网格</strong>： 注意这里是碰撞网格，不是普通的Mesh。一般来说由美术从3D软件中导出FBX时同时携带Convex Collision信息或者从在UE中手动添加。注意：后面我在这里踩了一个坑！</li>
+<li><strong>碰撞组件</strong>： 这个一般都不会忘记， 我们在添加StaticMesh对象的时候会默认挂载上Collision组件。</li>
+</ul>
+<p>讲完先决条件，我们来看下发生碰撞一般会需要注意的点：</p>
+<h3 id="1-配置Collision-Presets："><a href="#1-配置Collision-Presets：" class="headerlink" title="1. 配置Collision Presets："></a>1. 配置Collision Presets：</h3><p><img src="/2018/12/04/UE_Learn_PhysicCollider/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_15439245055616.png" alt="Alt text"><br>一般来说默认配置就可以，如果手动配置过，你应该大概知道这几种区别</p>
+<table>
+<thead>
+<tr>
+<th>Actor A</th>
+<th>Actor B</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ignore</td>
+<td>任何</td>
+<td>物体A、B会相互穿过彼此，不会有任何碰撞事件发生</td>
+</tr>
+<tr>
+<td>Overlap</td>
+<td>Overlap 或 Block</td>
+<td>物体A、B会穿过彼此，overlap事件会发送给双方</td>
+</tr>
+<tr>
+<td>Block</td>
+<td>Block</td>
+<td>双方会被Block住无法移动，并都收到碰撞事件</td>
+</tr>
+</tbody></table>
+<h3 id="2-检查Collision组件的位置："><a href="#2-检查Collision组件的位置：" class="headerlink" title="2. 检查Collision组件的位置："></a>2. 检查Collision组件的位置：</h3><p>一个Actor如果Collision主键没有挂载在根节点上，那么他可以作为被碰撞体Block其他物体。但是如果移动该Actor主动和别的物体碰撞，他将不会收到碰撞信息。<br>这里我们一般只需要把StaticMesh拖动到根节点上：<br><img src="/2018/12/04/UE_Learn_PhysicCollider/5a1d2a5a-0d8c-41bf-a3e6-41ea11fae8e1.gif" alt="Alt text"></p>
+<p>如果上面的几部你都配置对了，但是依然没有碰撞产生。那看下最后一条！我也被这个问题Block了几个小时😢</p>
+<h3 id="3-检查物体的Covex-Collision："><a href="#3-检查物体的Covex-Collision：" class="headerlink" title="3. 检查物体的Covex Collision："></a>3. 检查物体的Covex Collision：</h3><p>文章开始就讲了两个先决条件的第一条，仔细检查下你的mesh文件的Convex Collision是否存在。双击mesh文件，看下这里：<br><img src="/2018/12/04/UE_Learn_PhysicCollider/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_15439261629835.png" alt="Alt text"><br>如果这里数组为空就要注意啦，说明这个模型自身不带Convex Collision信息，在Collision/Convert Boxes to Convex中手动添加一个并保存。</p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p><strong><em>说下这次碰到问题的解决过程：</em></strong><br>首先在上述步骤1、2都反复检查很久之后依然发现无法产生碰撞。既然UE是有源码的，那就开始进去调试下吧（想到用Unity时候只能继续猜了😭），对比下正常能碰撞的工程。 发现大致如下的差异：<br>如果物体不能碰撞，那移动过程中就不会被阻止。大致猜测UE中物体移动的几个接口，大致断点到在UPrimitiveComponent::MoveComponentImpl函数里进行移动的计算：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">bool const bHadBlockingHit = MyWorld-&gt;ComponentSweepMulti(Hits, this, TraceStart, TraceEnd, InitialRotationQuat, Params);</span><br><span class="line"></span><br><span class="line">// If we had a valid blocking hit, store it.</span><br><span class="line">// If we are looking for overlaps, store those as well.</span><br><span class="line">int32 FirstNonInitialOverlapIdx = INDEX_NONE;</span><br><span class="line">if (bHadBlockingHit || (GetGenerateOverlapEvents() || bForceGatherOverlaps))</span><br></pre></td></tr></table></figure>
+
+<p>在动的过程中会通过射线检测当前物体的在World中的Hit情况，继续看下ComponentSweepMulti</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">FInlinePxShapeArray PShapes;</span><br><span class="line">const int32 NumShapes = FillInlinePxShapeArray_AssumesLocked(PShapes, *PRigidActor);</span><br><span class="line"></span><br><span class="line">// calculate the test global pose of the actor</span><br><span class="line">const PxQuat PGeomRot = U2PQuat(Quat);</span><br><span class="line">const PxTransform PGlobalStartPose = PxTransform(U2PVector(Start), PGeomRot);</span><br><span class="line">const PxTransform PGlobalEndPose = PxTransform(U2PVector(End), PGeomRot);</span><br></pre></td></tr></table></figure>
+
+<p>这里是进入物理引擎检测之前的准备，检查当前物体上有几个物理Shapes。调试发现，正常碰撞和非正常碰撞的差异在这里的NumShapes就不一样。继续FillInlinePxShapeArray_AssumesLocked</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int32 FillInlinePxShapeArray_AssumesLocked(FInlinePxShapeArray&amp; Array, const physx::PxRigidActor&amp; RigidActor)</span><br><span class="line">&#123;</span><br><span class="line">	//进入Physx物理引擎检测</span><br><span class="line">	const int32 NumShapes = RigidActor.getNbShapes();</span><br><span class="line">	Array.AddUninitialized(NumShapes);</span><br><span class="line">	RigidActor.getShapes(Array.GetData(), NumShapes);</span><br><span class="line">	return NumShapes;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里就正式进入物理引擎进行shapes的检测了。 既然这里产生差异，那问题就出现在碰撞物的mesh文件上了。仔细对照该文件和其他正常能碰撞的FBX的文件发现， 原来Convex Collision的数组信息为空 ！！！</p>
+<p>到这里，遇到的这个诡异的问题也算初步解决了。回头看其实是一个很基本的问题，主要根源还是对UE引擎的不熟悉。这里汇总下来做一个反思，希望后续继续努力深入学习UE引擎。另也备忘下，给遇到同样问题的朋友提供点思路。</p>
+
+      </div>
+      
+      <footer class="post-footer">
+        <div class="post-tags">
+            <a href="/tags/UE4/">UE4</a>
+            <a href="/tags/Collider/">Collider</a>
+            </div>
+        
+        <nav class="post-nav"><a class="prev" href="/2018/12/15/UE4_Learn_Sequencer/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">UE4 学习笔记 (三) Sequencer工具学习</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    <a class="next" href="/2018/12/03/UE4_Learn_Build_Binary/">
+        <span class="next-text nav-default">UE4 学习笔记 (一) 引擎源码编译及Binary文件导出</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    </nav></footer>
+    </article></div><div class="comments" id="comments"></div></div>
+      </main>
+
+      <footer id="footer" class="footer"><div class="social-links"><a href="mailto:zpzsoft@email.com" class="iconfont icon-email" title="email"></a>
+        <a href="https://github.com/ahonn" class="iconfont icon-github" title="github"></a>
+        <a href="/atom.xml" class="iconfont icon-rss" title="rss"></a>
+    </div><div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">&copy;2015 - 2019<span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Arenas Zheng</span>
+  </span>
+</div>
+</footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div><script type="text/javascript" src="/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout.js"></script>
+  <script type="text/javascript" src="/lib/pjax/jquery.pjax.min.js"></script>
+  <script type="text/javascript" src="/lib/nprogress/nprogress.min.js"></script>
+  <script type="text/javascript" src="/js/src/even.js?v=2.11.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.11.0"></script>
+</body>
+</html>
